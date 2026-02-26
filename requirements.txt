@@ -1,0 +1,11 @@
+requests==2.31.0
+beautifulsoup4==4.12.2
+python-dotenv==1.0.0
+lxml==4.9.3
+pydantic==2.5.2
+pandas>=2.0.0
+firebase-admin==6.2.0
+google-auth==2.25.2
+google-auth-oauthlib==1.2.0
+google-api-python-client==2.108.0
+flask

@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="{{ url_for('static', filename= 'css/style.css') }}">
+    <title>WTP Create Multiple Events</title>
+</head>
+<body>
+   <h1>Create Multiple Events</h1>
+   <img src="{{ url_for('static', filename='images/WTP_Logo.png') }}" class="logo" alt="WTP Logo">
+  
+    <form action="{{ url_for('index') }}" method="post" class="add-events-container">
+    <!-- <label for="fname">First name:</label><br> -->
+        <input type="text" id="urlinput" name="URL" placeholder="Enter URL"><br>
+
+        <button type="submit" name="action" value="add">
+            Add 
+        </button>
+
+        <button type="submit" name="action" value="clear">
+            Done
+        </button>
+         <!-- Add this new button -->
+        <button type="submit" name="action" value="clear_list">Clear</button>
+    </form>
+
+    <h3>URLs</h3>
+    <ul>
+        {% for u in event_urls %}
+            <li>{{ u }}</li>
+        {% else %}
+            <li>No URLs added </li>
+        {% endfor %}
+
+    </ul>
+    <h3>Progress</h3>
+    {{ s }} / {{ t }}
+
+    <!-- Progress bar -->
+<div id="progress-container" style="display:none;">
+    <p id="progress-text">Processing...</p>
+    <progress id="progress-bar" value="0" max="100" style="width:100%;"></progress>
+    <ul id="progress-log"></ul>
+    <!-- Add this -->
+    <button onclick="resetProgress()">Clear Progress</button>
+</div>
+
+<script>
+    const sessionId = "{{ session_id }}";
+
+    function resetProgress() {
+    document.getElementById('progress-container').style.display = 'none';
+    document.getElementById('progress-bar').value = 0;
+    document.getElementById('progress-text').textContent = 'Processing...';
+    document.getElementById('progress-log').innerHTML = '';
+}
+
+    if (sessionId) {
+        const container = document.getElementById('progress-container');
+        const bar = document.getElementById('progress-bar');
+        const text = document.getElementById('progress-text');
+        const log = document.getElementById('progress-log');
+
+        container.style.display = 'block';
+
+        const evtSource = new EventSource(`/progress/${sessionId}`);
+
+        evtSource.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+
+            if (data.done) {
+                text.textContent = "✅ All events processed!";
+                evtSource.close();
+                return;
+            }
+
+            if (data.error) {
+                text.textContent = "❌ An error occurred.";
+                evtSource.close();
+                return;
+            }
+
+            // Update progress bar
+            const percent = (data.index / data.total) * 100;
+            bar.value = percent;
+            text.textContent = `Processing ${data.index} of ${data.total}...`;
+
+            // Log each event
+            const li = document.createElement('li');
+            li.textContent = data.status === "done"
+                ? `✅ ${data.url}`
+                : `⏳ ${data.url}`;
+            log.appendChild(li);
+        };
+    }
+</script>
+
+</body>
+</html>
